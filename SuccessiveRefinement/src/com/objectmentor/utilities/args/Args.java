@@ -150,7 +150,7 @@ private ErrorCode errorCode = ErrorCode.OK;
     }
     
     private void setBooleanArg(char argChar, boolean value){
-        booleanArgs.get(argChar).setBoolean(value);
+        booleanArgs.get(argChar).set("true");
     }
     
     private boolean isBoolean(char argChar){
@@ -239,15 +239,11 @@ private ErrorCode errorCode = ErrorCode.OK;
         return valid;
     }
     
-    private class ArgumentMarshaler{
-        private boolean booleanValue = false;
-        private String stringValue;
-        private int integerValue;
-        
-        public void setBoolean(boolean value){
-            booleanValue = value;
-        }
-        
+    private abstract class ArgumentMarshaler{
+        protected boolean booleanValue = false;
+        protected String stringValue;
+        protected int integerValue;
+                
         public boolean getBoolean(){return booleanValue;}
         
         public void setString(String s){
@@ -265,17 +261,25 @@ private ErrorCode errorCode = ErrorCode.OK;
         public int getInteger(){
             return integerValue;
         }
+        
+        public abstract void set(String s);
     }
     
     private class BooleanArgumentMarshaler extends ArgumentMarshaler{
-        
+        public void set(String s){
+            booleanValue = true;
+        }
     }
     
     private class StringArgumentMarshaler extends ArgumentMarshaler{
-        
+        public void set(String s){
+            stringValue = "";
+        }
     }
     
     private class IntegerArgumentMarshaler extends ArgumentMarshaler{
-        
+        public void set(String s){
+            integerValue = 0;
+        }
     }
 }
