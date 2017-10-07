@@ -1,4 +1,4 @@
-package com.objectmentor.utilities.getopts;
+package com.objectmentor.utilities.args;
 
 //Code available github.com/Leah-Belin/CleanCodeDemo 
 
