@@ -10,7 +10,7 @@ public class Args {
     private String[] args;
     private boolean valid;
     private Set<Character> unexpectedArguments = new TreeSet<Character>();
-    private Map<Character, Boolean> booleanArgs = new HashMap<Character, Boolean>();
+    private Map<Character, ArgumentMarshaler> booleanArgs = new HashMap<Character, ArgumentMarshaler>();
     private Map<Character, String> stringArgs = new HashMap<Character, String>();
     private Set<Character> argsFound = new HashSet<Character>();
     private int currentArgument;
@@ -76,7 +76,7 @@ private ErrorCode errorCode = ErrorCode.OK;
     }
     
     private void parseBooleanSchemaElement(char elementId){
-        booleanArgs.put(elementId, false);
+        booleanArgs.put(elementId, new BooleanArgumentMarshaler());
     }
     
     private boolean parseArguments(){
@@ -133,7 +133,7 @@ private ErrorCode errorCode = ErrorCode.OK;
     }
     
     private void setBooleanArg(char argChar, boolean value){
-        booleanArgs.put(argChar, value);
+        booleanArgs.get(argChar).setBoolean(value);
     }
     
     private boolean isBoolean(char argChar){
@@ -174,7 +174,7 @@ private ErrorCode errorCode = ErrorCode.OK;
     }
     
     public boolean getBoolean(char arg){
-        return falseIfNull(booleanArgs.get(arg));
+        return falseIfNull(booleanArgs.get(arg).getBoolean());
     }
     
     private boolean falseIfNull(Boolean b){
@@ -195,5 +195,27 @@ private ErrorCode errorCode = ErrorCode.OK;
     
     public boolean isValid(){
         return valid;
+    }
+    
+    private class ArgumentMarshaler{
+        private boolean booleanValue = false;
+        
+        public void setBoolean(boolean value){
+            booleanValue = value;
+        }
+        
+        public boolean getBoolean(){return booleanValue;}
+    }
+    
+    private class BooleanArgumentMarshaler extends ArgumentMarshaler{
+        
+    }
+    
+    private class StringArgumentMarshaler extends ArgumentMarshaler{
+        
+    }
+    
+    private class IntegerArgumentMarshaler extends ArgumentMarshaler{
+        
     }
 }
