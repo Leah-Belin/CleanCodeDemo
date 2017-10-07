@@ -12,12 +12,16 @@ public class Args {
     private Set<Character> unexpectedArguments = new TreeSet<Character>();
     private Map<Character, ArgumentMarshaler> booleanArgs = new HashMap<Character, ArgumentMarshaler>();
     private Map<Character, ArgumentMarshaler> stringArgs = new HashMap<Character, ArgumentMarshaler>();
+    private Map<Character, ArgumentMarshaler> intArgs = new HashMap<Character, ArgumentMarshaler>();
     private Set<Character> argsFound = new HashSet<Character>();
     private int currentArgument;
     private char errorArgument = '\0';
 
 enum ErrorCode{
-    OK, MISSING_STRING
+    OK, 
+    MISSING_STRING,
+    MISSING_INTEGER,
+    INVALID_INTEGER
 }    
 
 private ErrorCode errorCode = ErrorCode.OK;
@@ -54,6 +58,8 @@ private ErrorCode errorCode = ErrorCode.OK;
             parseBooleanSchemaElement(elementId);
         else if(isStringSchemaElement(elementTail))
             parseStringSchemaElement(elementId);
+        else if(isIntegerSchemaElement(elementTail))
+            parseIntegerSchemaElement(elementId);
     }
     
     private void validateSchemaElementId(char elementId) throws ParseException{
@@ -62,11 +68,7 @@ private ErrorCode errorCode = ErrorCode.OK;
             "Bad character:" + elementId + "in Args format:" + schema,0);
         }
     }
-    
-    private void parseStringSchemaElement(char elementId){
-        stringArgs.put(elementId, new StringArgumentMarshaler());
-    }
-    
+        
     private boolean isStringSchemaElement(String elementTail){
         return elementTail.equals("*");
     }
@@ -75,8 +77,20 @@ private ErrorCode errorCode = ErrorCode.OK;
         return elementTail.length() == 0;
     }
     
+    private boolean isIntegerSchemaElement(String elementTail){
+        return elementTail.equals("#");
+    }
+    
     private void parseBooleanSchemaElement(char elementId){
         booleanArgs.put(elementId, new BooleanArgumentMarshaler());
+    }
+    
+    private void parseStringSchemaElement(char elementId){
+        stringArgs.put(elementId, new StringArgumentMarshaler());
+    }
+    
+    private void parseIntegerSchemaElement(char elementId){
+        intArgs.put(elementId, new IntegerArgumentMarshaler());
     }
     
     private boolean parseArguments() throws ArgsException{
@@ -112,6 +126,8 @@ private ErrorCode errorCode = ErrorCode.OK;
             setBooleanArg(argChar, true);
         else if(isString(argChar))
             setStringArg(argChar, " ");
+        else if(isInteger(argChar))
+            setIntArg(argChar);
         else
             set = false;
         return set;
@@ -139,6 +155,27 @@ private ErrorCode errorCode = ErrorCode.OK;
     
     private boolean isBoolean(char argChar){
         return booleanArgs.containsKey(argChar);
+    }
+    
+    private void setIntArg(char argChar) throws ArgsException{
+        currentArgument++;
+        String parameter = null;
+        try{
+            parameter = args[currentArgument];
+            intArgs.get(argChar).setInteger(Integer.parseInt(parameter));
+        }catch(ArrayIndexOutOfBoundsException e){
+            valid = false;
+            errorCode = ErrorCode.MISSING_INTEGER;
+            throw new ArgsException();
+        }catch(NumberFormatException e){
+            valid = false;
+            errorCode = ErrorCode.INVALID_INTEGER;
+            throw new ArgsException();
+        }        
+    }
+  
+    private boolean isInteger(char argChar){
+        return intArgs.containsKey(argChar);
     }
     
     public int cardinality(){
@@ -189,6 +226,11 @@ private ErrorCode errorCode = ErrorCode.OK;
         return am == null ? "" : am.getString();
     }
     
+    public int getInt(char arg){
+        Args.ArgumentMarshaler am = intArgs.get(arg);
+        return am == null ? 0 : am.getInteger();
+    }
+    
     public boolean has(char arg){
         return argsFound.contains(arg);
     }
@@ -200,6 +242,7 @@ private ErrorCode errorCode = ErrorCode.OK;
     private class ArgumentMarshaler{
         private boolean booleanValue = false;
         private String stringValue;
+        private int integerValue;
         
         public void setBoolean(boolean value){
             booleanValue = value;
@@ -213,6 +256,14 @@ private ErrorCode errorCode = ErrorCode.OK;
         
         public String getString(){
             return stringValue == null ? "" : stringValue;
+        }
+        
+        public void setInteger(int i){
+            integerValue = i;
+        }
+        
+        public int getInteger(){
+            return integerValue;
         }
     }
     
