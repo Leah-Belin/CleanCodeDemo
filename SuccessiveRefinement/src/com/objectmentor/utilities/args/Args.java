@@ -174,8 +174,10 @@ private ErrorCode errorCode = ErrorCode.OK;
     }
     
     public boolean getBoolean(char arg){
-        return falseIfNull(booleanArgs.get(arg).getBoolean());
+        Args.ArgumentMarshaler am = booleanArgs.get(arg);
+        return am != null && am.getBoolean();
     }
+    
     
     private boolean falseIfNull(Boolean b){
         return b == null?false:b;
