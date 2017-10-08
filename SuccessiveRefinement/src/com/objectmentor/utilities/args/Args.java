@@ -15,26 +15,16 @@ public class Args {
     private Iterator<String> currentArgument;
     private char errorArgumentId = '\0';
     private String errorParameter = "TILT";
-    private ErrorCode errorCode = ErrorCode.OK;
+    private ArgsException.ErrorCode errorCode = ArgsException.ErrorCode.OK;
     private List<String> argsList;
 
-enum ErrorCode{
-    OK, 
-    MISSING_STRING,
-    MISSING_INTEGER,
-    INVALID_INTEGER,
-    UNEXPECTED_ARGUMENT, 
-    MISSING_DOUBLE, 
-    INVALID_DOUBLE
-    }    
-
-    public Args(String schema, String[]args) throws ParseException, ArgsException{
+    public Args(String schema, String[]args) throws ArgsException{
         this.schema = schema;
         argsList = Arrays.asList(args);
         valid = parse();
     }
     
-    public boolean parse() throws ParseException, ArgsException{
+    public boolean parse() throws ArgsException{
         if(schema.length() == 0 && argsList.size() == 0)
             return true;
         parseSchema();
@@ -45,7 +35,7 @@ enum ErrorCode{
         return valid;
     }
     
-    private boolean parseSchema() throws ParseException{
+    private boolean parseSchema() throws ArgsException{
         for(String element: schema.split(",")){
             if(element.length() > 0){
                 String trimmedElement = element.trim();
@@ -55,7 +45,7 @@ enum ErrorCode{
         return true;
     }
     
-    private void parseSchemaElement(String element) throws ParseException{
+    private void parseSchemaElement(String element) throws ArgsException{
         char elementId = element.charAt(0);
         String elementTail = element.substring(1);
         validateSchemaElementId(elementId);
@@ -68,15 +58,15 @@ enum ErrorCode{
         else if(elementTail.equals("##"))
             marshalers.put(elementId, new DoubleArgumentMarshaler());
         else{
-            throw new ParseException(String.format("Argument: %c has invalid format: %s.", 
-                    elementId, elementTail), 0);
+            throw new ArgsException(String.format("Argument: %c has invalid format: %s.", 
+                    elementId, elementTail));
         }
     }
     
-    private void validateSchemaElementId(char elementId) throws ParseException{
+    private void validateSchemaElementId(char elementId) throws ArgsException{
         if(!Character.isLetter(elementId)){
-            throw new ParseException(
-            "Bad character:" + elementId + "in Args format:" + schema,0);
+            throw new ArgsException(
+            "Bad character:" + elementId + "in Args format:" + schema);
         }
     }
         
@@ -103,7 +93,7 @@ enum ErrorCode{
             argsFound.add(argChar);            
         else{
             unexpectedArguments.add(argChar);
-            errorCode = ErrorCode.UNEXPECTED_ARGUMENT;
+            errorCode = ArgsException.ErrorCode.UNEXPECTED_ARGUMENT;
             valid = false;
         }                    
     }
@@ -131,27 +121,7 @@ enum ErrorCode{
         else
             return "";
     }
-    
-    public String errorMesage() throws Exception{
-        switch (errorCode) {
-      case OK:
-        return "TILT: Should not get here.";
-      case UNEXPECTED_ARGUMENT:
-        return String.format("Argument -%c unexpected.", errorArgumentId);
-      case MISSING_STRING:
-        return String.format("Could not find string parameter for -%c.", errorArgumentId);
-      case INVALID_INTEGER:
-        return String.format("Argument -%c expects an integer but was '%s'.", errorArgumentId, errorParameter);
-      case MISSING_INTEGER:
-        return String.format("Could not find integer parameter for -%c.", errorArgumentId);
-       case INVALID_DOUBLE:
-        return String.format("Argument -%c expects a double but was '%s'.", errorArgumentId, errorParameter);
-      case MISSING_DOUBLE:
-        return String.format("Could not find double parameter for -%c.", errorArgumentId);
-    }
-    return "";
-    }
-    
+        
     public boolean getBoolean(char arg){
         Args.ArgumentMarshaler am = marshalers.get(arg);
         boolean b = false;
@@ -222,7 +192,7 @@ enum ErrorCode{
             try{
                 stringValue = currentArgument.next();
             }catch(NoSuchElementException e){
-                errorCode = ErrorCode.MISSING_STRING;
+                errorCode = ArgsException.ErrorCode.MISSING_STRING;
                 throw new ArgsException();
             }
         }
@@ -241,12 +211,12 @@ enum ErrorCode{
                 parameter = currentArgument.next();
                 intValue = Integer.parseInt(parameter);
             }catch(NoSuchElementException e){
-                errorCode = ErrorCode.MISSING_INTEGER;
+                errorCode = ArgsException.ErrorCode.MISSING_INTEGER;
                 throw new ArgsException();
             }catch(NumberFormatException e){
                 errorParameter = parameter;
-                errorCode = ErrorCode.INVALID_INTEGER;
-                throw e;
+                errorCode = ArgsException.ErrorCode.INVALID_INTEGER;
+                throw new ArgsException();
             }
         }
         
@@ -264,11 +234,11 @@ enum ErrorCode{
                 parameter = currentArgument.next();
                 doubleValue = Double.parseDouble(parameter);
             }catch(NoSuchElementException e){
-                errorCode = ErrorCode.MISSING_DOUBLE;
+                errorCode = ArgsException.ErrorCode.MISSING_DOUBLE;
                 throw new ArgsException();
             }catch(NumberFormatException e){
                 errorParameter = parameter;
-                errorCode = ErrorCode.INVALID_DOUBLE;
+                errorCode = ArgsException.ErrorCode.INVALID_DOUBLE;
                 throw new ArgsException();
             }
         }
