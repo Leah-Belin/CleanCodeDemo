@@ -203,12 +203,12 @@ enum ErrorCode{
         return valid;
     }
     
-    private abstract class ArgumentMarshaler{        
-        public abstract void set(Iterator<String> currentArgument) throws ArgsException;
-        public abstract Object get();
+    private interface ArgumentMarshaler{        
+        void set(Iterator<String> currentArgument) throws ArgsException;
+        Object get();
     }
     
-    private class BooleanArgumentMarshaler extends ArgumentMarshaler{
+    private class BooleanArgumentMarshaler implements ArgumentMarshaler{
         private boolean booleanValue = false;
 
         public void set(Iterator<String> currentArgument) throws ArgsException{
@@ -220,7 +220,7 @@ enum ErrorCode{
         }
     }
     
-    private class StringArgumentMarshaler extends ArgumentMarshaler{
+    private class StringArgumentMarshaler implements ArgumentMarshaler{
         private String stringValue = "";
 
         public void set(Iterator<String> currentArgument) throws ArgsException{
@@ -237,29 +237,21 @@ enum ErrorCode{
         }
     }
     
-    private class IntegerArgumentMarshaler extends ArgumentMarshaler{
+    private class IntegerArgumentMarshaler implements ArgumentMarshaler{
         private int intValue = 0;
         
         public void set(Iterator<String> currentArgument)throws ArgsException{
             String parameter = null;
             try{
                 parameter = currentArgument.next();
-                set(parameter);
+                intValue = Integer.parseInt(parameter);
             }catch(NoSuchElementException e){
                 errorCode = ErrorCode.MISSING_INTEGER;
                 throw new ArgsException();
-            }catch(ArgsException e){
+            }catch(NumberFormatException e){
                 errorParameter = parameter;
                 errorCode = ErrorCode.INVALID_INTEGER;
                 throw e;
-            }
-        }
-        
-        public void set(String s) throws ArgsException{
-            try{
-                intValue = Integer.parseInt(s);
-            }catch(NumberFormatException e){
-                throw new ArgsException();
             }
         }
         
