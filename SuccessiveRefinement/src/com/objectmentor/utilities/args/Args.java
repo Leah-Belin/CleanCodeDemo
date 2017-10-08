@@ -118,15 +118,15 @@ enum ErrorCode{
     
     private boolean setArgument(char argChar) throws ArgsException{
         ArgumentMarshaler m = marshalers.get(argChar);
+        if(m == null)
+            return false;
         try{
             if(m  instanceof BooleanArgumentMarshaler)
-                setBooleanArg(m);
+                setBooleanArg(m, currentArgument);
             else if(m instanceof StringArgumentMarshaler)
                 setStringArg(m);
             else if(m instanceof IntegerArgumentMarshaler)
                 setIntArg(m);
-            else
-                return false;
         }catch(ArgsException e){
             valid = false;
             errorArgumentId = argChar;
@@ -159,11 +159,8 @@ enum ErrorCode{
         }
     }
     
-    private void setBooleanArg(ArgumentMarshaler m){
-        try{
-            m.set("true");
-        }catch(ArgsException e){            
-        }
+    private void setBooleanArg(ArgumentMarshaler m, Iterator<String> currentArgument) throws ArgsException{
+        m.set("true");
     }   
   
     public int cardinality(){
