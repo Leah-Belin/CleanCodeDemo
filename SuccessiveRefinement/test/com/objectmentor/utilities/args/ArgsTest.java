@@ -136,38 +136,4 @@ public class ArgsTest extends TestCase {
       assertEquals('x', e.getErrorArgumentId());
     }
   }
-
-  public void testStringArray() throws Exception {
-    Args args = new Args("x[*]", new String[]{"-x", "alpha"});
-    assertTrue(args.has('x'));
-    String[] result = args.getStringArray('x');
-    assertEquals(1, result.length);
-    assertEquals("alpha", result[0]);
-  }
-
-  public void testMissingStringArrayElement() throws Exception {
-    try {
-      new Args("x[*]", new String[] {"-x"});
-      fail();
-    } catch (ArgsException e) {
-      assertEquals(MISSING_STRING,e.getErrorCode());
-      assertEquals('x', e.getErrorArgumentId());
-    }
-  }
-
-  public void testExtraArguments() throws Exception {
-    Args args = new Args("x,y*", new String[]{"-x", "-y", "alpha", "beta"});
-    assertTrue(args.getBoolean('x'));
-    assertEquals("alpha", args.getString('y'));
-    assertEquals(3, args.nextArgument());
-  }
-
-  public void testExtraArgumentsThatLookLikeFlags() throws Exception {
-    Args args = new Args("x,y", new String[]{"-x", "alpha", "-y", "beta"});
-    assertTrue(args.has('x'));
-    assertFalse(args.has('y'));
-    assertTrue(args.getBoolean('x'));
-    assertFalse(args.getBoolean('y'));
-    assertEquals(1, args.nextArgument());
-  }
 }
