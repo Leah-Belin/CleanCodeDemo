@@ -1,6 +1,7 @@
 package com.objectmentor.utilities.args;
 
 //Code available github.com/Leah-Belin/CleanCodeDemo 
+//Uncle Bob's code: https://github.com/unclebob/javaargs/commit/53fbebe4a24fb973d546d10be7d465d73c0bf382
 
 import java.util.*;
 import java.text.ParseException;
@@ -136,7 +137,7 @@ private ErrorCode errorCode = ErrorCode.OK;
     private void setStringArg(char argChar, String s) throws ArgsException{
         currentArgument++;
         try{
-            stringArgs.get(argChar).setString(args[currentArgument]);
+            stringArgs.get(argChar).set(args[currentArgument]);
         }catch(ArrayIndexOutOfBoundsException e){
             valid = false;
             errorArgument = argChar;
@@ -150,7 +151,11 @@ private ErrorCode errorCode = ErrorCode.OK;
     }
     
     private void setBooleanArg(char argChar, boolean value){
-        booleanArgs.get(argChar).set("true");
+        try{
+                booleanArgs.get(argChar).set("true");
+        }catch(ArgsException e){
+            
+        }
     }
     
     private boolean isBoolean(char argChar){
@@ -162,16 +167,18 @@ private ErrorCode errorCode = ErrorCode.OK;
         String parameter = null;
         try{
             parameter = args[currentArgument];
-            intArgs.get(argChar).setInteger(Integer.parseInt(parameter));
+            intArgs.get(argChar).set(parameter);
         }catch(ArrayIndexOutOfBoundsException e){
             valid = false;
+            errorArgument = argChar;
             errorCode = ErrorCode.MISSING_INTEGER;
             throw new ArgsException();
         }catch(NumberFormatException e){
             valid = false;
+            errorArgument = argChar;
             errorCode = ErrorCode.INVALID_INTEGER;
-            throw new ArgsException();
-        }        
+            throw e;
+        }
     }
   
     private boolean isInteger(char argChar){
@@ -213,7 +220,7 @@ private ErrorCode errorCode = ErrorCode.OK;
     
     public boolean getBoolean(char arg){
         Args.ArgumentMarshaler am = booleanArgs.get(arg);
-        return am != null && am.getBoolean();
+        return am != null && (Boolean)am.get();
     }
     
     
@@ -223,12 +230,12 @@ private ErrorCode errorCode = ErrorCode.OK;
     
     public String getString(char arg){
         Args.ArgumentMarshaler am = stringArgs.get(arg);
-        return am == null ? "" : am.getString();
+        return am == null ? "" : (String)am.get();
     }
     
     public int getInt(char arg){
         Args.ArgumentMarshaler am = intArgs.get(arg);
-        return am == null ? 0 : am.getInteger();
+        return am == null ? 0 : (Integer)am.get();
     }
     
     public boolean has(char arg){
@@ -239,47 +246,48 @@ private ErrorCode errorCode = ErrorCode.OK;
         return valid;
     }
     
-    private abstract class ArgumentMarshaler{
-        protected boolean booleanValue = false;
-        protected String stringValue;
-        protected int integerValue;
-                
-        public boolean getBoolean(){return booleanValue;}
-        
-        public void setString(String s){
-            stringValue = s;
-        }
-        
-        public String getString(){
-            return stringValue == null ? "" : stringValue;
-        }
-        
-        public void setInteger(int i){
-            integerValue = i;
-        }
-        
-        public int getInteger(){
-            return integerValue;
-        }
-        
-        public abstract void set(String s);
+    private abstract class ArgumentMarshaler{        
+        public abstract void set(String s) throws ArgsException;
+        public abstract Object get();
     }
     
     private class BooleanArgumentMarshaler extends ArgumentMarshaler{
+        private boolean booleanValue = false;
+
         public void set(String s){
             booleanValue = true;
+        }
+        
+        public Object get(){
+            return booleanValue;
         }
     }
     
     private class StringArgumentMarshaler extends ArgumentMarshaler{
+        private String stringValue = "";
+
         public void set(String s){
-            stringValue = "";
+            stringValue = s;
+        }
+        
+        public Object get(){
+            return stringValue;
         }
     }
     
     private class IntegerArgumentMarshaler extends ArgumentMarshaler{
-        public void set(String s){
-            integerValue = 0;
+        private int intValue = 0;
+        
+        public void set(String s)throws ArgsException{
+            try{
+                intValue = Integer.parseInt(s);
+            }catch(NumberFormatException e){
+                throw new ArgsException();
+            }
+        }
+        
+        public Object get(){
+            return intValue;
         }
     }
 }
