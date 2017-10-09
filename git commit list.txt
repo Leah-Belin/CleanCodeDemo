@@ -1,0 +1,11 @@
+e75c8ea Initial Commit     
+28054b9  Added String Argument
+	Uncle Bob also adds an int element, but realizes at this point that 
+	the code is unmaintainable.  Each argument type would require some way
+	to parse its schema lement in order to select the HashMap for that
+	type.  Each argument type needed to be parsed in the command-line strings 
+	and converted to its true type.  Finally, each argument type needed
+	a getXXX method so that it could be returned to the caller as its true
+	type.
+
+This is the start of the ArgumentMarshaler concept
