@@ -10,7 +10,7 @@ public class Args {
     private String[] args;
     private boolean valid = true;
     private Set<Character> unexpectedArguments = new TreeSet<Character>();
-    private Map<Character, Boolean> booleanArgs = new HashMap<Character, Boolean>();
+    private Map<Character, ArgumentMarshaler> booleanArgs = new HashMap<Character, ArgumentMarshaler>();
     private Map<Character, String> stringArgs = new HashMap<Character, String>();
     private Map<Character, Integer> intArgs = new HashMap<Character, Integer>();
     private Set<Character> argsFound = new HashSet<Character>();
@@ -77,7 +77,7 @@ public class Args {
     }
     
     private void parseBooleanSchemaElement(char elementId){
-        booleanArgs.put(elementId, false);        
+        booleanArgs.put(elementId, new BooleanArgumentMarshaler());        
     }
     
     private boolean parseArguments(){
@@ -139,7 +139,7 @@ public class Args {
     }
     
     private void setBooleanArg(char argChar, boolean value){
-        booleanArgs.put(argChar, value);
+        booleanArgs.get(argChar).setBoolean(value);
     }
         
     public int cardinality(){
@@ -175,13 +175,10 @@ public class Args {
     }
     
     public boolean getBoolean(char arg){
-        return falseIfNull(booleanArgs.get(arg));
+        Args.ArgumentMarshaler am = booleanArgs.get(arg);
+        return am != null && am.getBoolean();
     }
-    
-    private boolean falseIfNull(Boolean b){
-        return b == null ? false : b;
-    }
-    
+       
     public String getString(char arg) {
         return blankIfNull(stringArgs.get(arg));
     }
@@ -198,7 +195,7 @@ public class Args {
         return valid;
     }
     
-    private class argumentMarshaler{
+    private class ArgumentMarshaler{
         private boolean booleanValue = false;
         
         public void setBoolean(boolean value){
@@ -208,15 +205,15 @@ public class Args {
         public boolean getBoolean(){return booleanValue;}
     }
     
-    private class booleanArgumentMarshaler{
+    private class BooleanArgumentMarshaler extends ArgumentMarshaler{
         
     }
     
-    private class stringArgumentMarshaler{
+    private class StringArgumentMarshaler extends ArgumentMarshaler{
         
     }
     
-    private class integerArgumentMarshaler{
+    private class IntegerArgumentMarshaler extends ArgumentMarshaler{
         
     }
 }
