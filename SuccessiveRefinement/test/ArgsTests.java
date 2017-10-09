@@ -77,6 +77,12 @@ public class ArgsTests {
     } 
     
     @Test 
+        public void getBoolean_returns_false_if_invalid_arg() throws Exception{
+        Args instance = new Args("x", new String[]{"-x"});
+        assertEquals(false, instance.getBoolean('y'));
+    }
+    
+    @Test 
     public void getString_returns_string() throws Exception {
         Args instance = new Args("x*", new String[]{"-x", "param"});
         assertEquals("param", instance.getString('x'));
