@@ -94,6 +94,17 @@ public class ArgsTests {
         assertEquals("", instance.getString('x'));
     } 
     
+    @Test 
+    public void getInteger_returns_integer() throws Exception {
+        Args instance = new Args("x#", new String[]{"-x", "42"});
+        assertEquals(42, instance.getInteger('x'));
+    }
+    
+    @Test(expected = Exception.class)
+    public void getInteger_throws_exception_if_null() throws Exception {
+        new Args("x#", new String[]{"-x"});
+    } 
+    
     @Test
     public void has_returns_simple_boolean()throws Exception{
         Args instance = new Args("x", new String[]{"-x"});
@@ -105,4 +116,11 @@ public class ArgsTests {
         Args instance = new Args("x*", new String[]{"-x", "param"});
         assertTrue(instance.has('x'));
     }
+    
+    @Test
+    public void has_returns_simple_integer() throws Exception{
+        Args instance = new Args("x#", new String[]{"-x", "42"});
+        assertTrue(instance.has('x'));
+    }  
+  
 }
