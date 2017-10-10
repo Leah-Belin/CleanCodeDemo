@@ -16,7 +16,7 @@ public class Args {
     private char errorArgument = '\0';
     
     enum ErrorCode{
-        OK, MISSING_STRING, MISSING_INTEGER, INVALID_INTEGER
+        OK, MISSING_STRING, MISSING_INTEGER, INVALID_INTEGER, UNEXPECTED_ARGUMENT
     }
     
     private ErrorCode errorCode = ErrorCode.OK;
@@ -49,12 +49,16 @@ public class Args {
         char elementId = element.charAt(0);
         String elementTail = element.substring(1);
         validateSchemaElementId(elementId);
-        if(isBooleanSchemaElement(elementTail))
-            parseBooleanSchemaElement(elementId);
-        if(isStringSchemaElement(elementTail))
-            parseStringSchemaElement(elementId); 
-        if(isIntegerSchemaElement(elementTail))
-            parseIntegerSchemaElement(elementId);
+        if(elementTail.length() == 0)
+            marshalers.put(elementId, new BooleanArgumentMarshaler());
+        else if(elementTail.equals("*"))
+            marshalers.put(elementId, new StringArgumentMarshaler()); 
+        else if(elementTail.equals("#"))
+            marshalers.put(elementId, new IntegerArgumentMarshaler());
+        else{
+            throw new ParseException(String.format(
+            "Argument: %c has invalid format: %s.", elementId, elementTail), 0);        
+        }
     }
     
     private void validateSchemaElementId(char elementId) throws ParseException{
@@ -62,30 +66,6 @@ public class Args {
             throw new ParseException(
             "Bad character:" + elementId + "in Args format:" + schema, 0);
         }
-    }
-    
-    private void parseStringSchemaElement(char elementId){
-        marshalers.put(elementId, new StringArgumentMarshaler());
-    }
-    
-    private boolean isStringSchemaElement(String elementTail){
-        return elementTail.equals("*");
-    }
-    
-    private boolean isBooleanSchemaElement(String elementTail){
-        return elementTail.length() == 0;
-    }
-    
-    private void parseBooleanSchemaElement(char elementId){
-        marshalers.put(elementId, new BooleanArgumentMarshaler());        
-    }
-    
-    private boolean isIntegerSchemaElement(String elementTail){
-        return elementTail.equals("#");
-    }
-    
-    private void parseIntegerSchemaElement(char elementId){
-        marshalers.put(elementId, new IntegerArgumentMarshaler());
     }
     
     private boolean parseArguments()throws Exception{
@@ -188,6 +168,13 @@ public class Args {
                     return String.format("Could not find string parameter for -%c.", errorArgument);
                 case OK:
                     throw new Exception("TILT: Should not get here.");
+                case UNEXPECTED_ARGUMENT:
+                    return String.format("Argument -%c unexpected.", errorArgument);
+                case INVALID_INTEGER:
+                    return String.format("Argument -%c expects an integer but was '%s'.", errorArgument);
+                case MISSING_INTEGER:
+                    return String.format("Could not find integer parameter for -%c.", errorArgument);
+      
             }
         return"";
     }
@@ -215,12 +202,20 @@ public class Args {
     
     public String getString(char arg){
         Args.ArgumentMarshaler am = marshalers.get(arg);
-        return am == null ? "" : (String)am.get();
+        try{
+            return am == null ? "" : (String)am.get();
+        }catch(ClassCastException e){
+            return "";
+        }
     }
     
     public int getInteger(char arg){
         Args.ArgumentMarshaler am = marshalers.get(arg);
-        return am == null ? 0 : (int)am.get();
+        try{
+            return am == null ? 0 : (int)am.get();
+        }catch(Exception e){
+            return 0;
+        }
     }
     
     public boolean has(char arg){
