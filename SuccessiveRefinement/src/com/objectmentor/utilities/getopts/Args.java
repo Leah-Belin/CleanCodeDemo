@@ -117,19 +117,19 @@ public class Args {
     }
     
     private boolean setArgument(char argChar) throws Exception{
-        boolean set = true;
-        if(isBoolean(argChar))
-            setBooleanArg(argChar, true);
-        else if(isString(argChar))
-            setStringArg(argChar, "");
-        else if(isInteger(argChar))
+        ArgumentMarshaler m = marshalers.get(argChar);
+        if(m instanceof BooleanArgumentMarshaler)
+            setBooleanArg(argChar);
+        else if(m instanceof StringArgumentMarshaler)
+            setStringArg(argChar);
+        else if(m instanceof IntegerArgumentMarshaler)
             setIntegerArg(argChar);
         else
-            set = false;
-        return set;
+            return false;
+        return true;
     }
     
-    private void setStringArg(char argChar, String s){
+    private void setStringArg(char argChar){
         currentArgument++;
         try{
             marshalers.get(argChar).set(args[currentArgument]);
@@ -140,22 +140,7 @@ public class Args {
         }
     }
     
-    private boolean isString(char argChar){
-        ArgumentMarshaler m = marshalers.get(argChar);
-        return m instanceof StringArgumentMarshaler;
-    }
-    
-    private boolean isBoolean(char argChar){
-        ArgumentMarshaler m = marshalers.get(argChar);
-        return m instanceof BooleanArgumentMarshaler;
-    }
-    
-    private boolean isInteger(char argChar){
-      ArgumentMarshaler m = marshalers.get(argChar);
-        return m instanceof IntegerArgumentMarshaler;  
-    }
-    
-    private void setBooleanArg(char argChar, boolean value){
+    private void setBooleanArg(char argChar){
         try{
         marshalers.get(argChar).set("true");
         }catch(Exception e){
