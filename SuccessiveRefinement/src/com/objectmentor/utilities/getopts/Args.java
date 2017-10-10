@@ -118,42 +118,47 @@ public class Args {
     
     private boolean setArgument(char argChar) throws Exception{
         ArgumentMarshaler m = marshalers.get(argChar);
-        if(m instanceof BooleanArgumentMarshaler)
-            setBooleanArg(argChar);
-        else if(m instanceof StringArgumentMarshaler)
-            setStringArg(argChar);
-        else if(m instanceof IntegerArgumentMarshaler)
-            setIntegerArg(argChar);
-        else
-            return false;
+        try{
+            if(m instanceof BooleanArgumentMarshaler)
+                setBooleanArg(m);
+            else if(m instanceof StringArgumentMarshaler)
+                setStringArg(m);
+            else if(m instanceof IntegerArgumentMarshaler)
+                setIntegerArg(m);
+            else
+                return false;
+        }catch(Exception e){
+            valid = false;
+            errorArgument = argChar;
+            throw e;
+        }
         return true;
     }
     
-    private void setStringArg(char argChar){
+    private void setStringArg(ArgumentMarshaler m){
         currentArgument++;
         try{
-            marshalers.get(argChar).set(args[currentArgument]);
+            m.set(args[currentArgument]);
         }catch(ArrayIndexOutOfBoundsException e){
             valid = false;
-            errorArgument = argChar;
             errorCode = ErrorCode.MISSING_STRING;
         }
     }
     
-    private void setBooleanArg(char argChar){
+    private void setBooleanArg(ArgumentMarshaler m){
         try{
-        marshalers.get(argChar).set("true");
+        m.set("true");
         }catch(Exception e){
             
         }
     }
     
-    private void setIntegerArg(char argChar) throws Exception{
+    private void setIntegerArg(ArgumentMarshaler m) throws Exception{
         currentArgument++;
         String parameter = null;
         try{
             parameter = args[currentArgument];
-            marshalers.get(argChar).set(parameter);
+            m.set(parameter);
         }catch(ArrayIndexOutOfBoundsException e){
             valid = false;
             errorCode = ErrorCode.MISSING_INTEGER;
@@ -199,7 +204,13 @@ public class Args {
     
     public boolean getBoolean(char arg){
         Args.ArgumentMarshaler am = marshalers.get(arg);
-        return am != null && (Boolean)am.get();
+        boolean b = false;
+        try{
+            b = am != null && (Boolean)am.get();
+        }catch(ClassCastException e){
+            b = false;
+        }
+        return b;
     }
     
     public String getString(char arg){
