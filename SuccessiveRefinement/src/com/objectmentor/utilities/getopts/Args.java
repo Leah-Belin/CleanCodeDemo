@@ -10,9 +10,7 @@ public class Args {
     private String[] args;
     private boolean valid = true;
     private Set<Character> unexpectedArguments = new TreeSet<Character>();
-    private Map<Character, ArgumentMarshaler> booleanArgs = new HashMap<Character, ArgumentMarshaler>();
-    private Map<Character, ArgumentMarshaler> stringArgs = new HashMap<Character, ArgumentMarshaler>();
-    private Map<Character, ArgumentMarshaler> integerArgs = new HashMap<Character, ArgumentMarshaler>();
+    private Map<Character, ArgumentMarshaler> marshalers = new HashMap<Character, ArgumentMarshaler>();
     private Set<Character> argsFound = new HashSet<Character>();
     private int currentArgument;
     private char errorArgument = '\0';
@@ -67,7 +65,7 @@ public class Args {
     }
     
     private void parseStringSchemaElement(char elementId){
-        stringArgs.put(elementId, new StringArgumentMarshaler());
+        marshalers.put(elementId, new StringArgumentMarshaler());
     }
     
     private boolean isStringSchemaElement(String elementTail){
@@ -79,7 +77,7 @@ public class Args {
     }
     
     private void parseBooleanSchemaElement(char elementId){
-        booleanArgs.put(elementId, new BooleanArgumentMarshaler());        
+        marshalers.put(elementId, new BooleanArgumentMarshaler());        
     }
     
     private boolean isIntegerSchemaElement(String elementTail){
@@ -87,7 +85,7 @@ public class Args {
     }
     
     private void parseIntegerSchemaElement(char elementId){
-        integerArgs.put(elementId, new IntegerArgumentMarshaler());
+        marshalers.put(elementId, new IntegerArgumentMarshaler());
     }
     
     private boolean parseArguments()throws Exception{
@@ -134,7 +132,7 @@ public class Args {
     private void setStringArg(char argChar, String s){
         currentArgument++;
         try{
-            stringArgs.get(argChar).set(args[currentArgument]);
+            marshalers.get(argChar).set(args[currentArgument]);
         }catch(ArrayIndexOutOfBoundsException e){
             valid = false;
             errorArgument = argChar;
@@ -143,20 +141,23 @@ public class Args {
     }
     
     private boolean isString(char argChar){
-        return stringArgs.containsKey(argChar);
+        ArgumentMarshaler m = marshalers.get(argChar);
+        return m instanceof StringArgumentMarshaler;
     }
     
     private boolean isBoolean(char argChar){
-        return booleanArgs.containsKey(argChar);
+        ArgumentMarshaler m = marshalers.get(argChar);
+        return m instanceof BooleanArgumentMarshaler;
     }
     
     private boolean isInteger(char argChar){
-      return integerArgs.containsKey(argChar);  
+      ArgumentMarshaler m = marshalers.get(argChar);
+        return m instanceof IntegerArgumentMarshaler;  
     }
     
     private void setBooleanArg(char argChar, boolean value){
         try{
-        booleanArgs.get(argChar).set("true");
+        marshalers.get(argChar).set("true");
         }catch(Exception e){
             
         }
@@ -167,7 +168,7 @@ public class Args {
         String parameter = null;
         try{
             parameter = args[currentArgument];
-            integerArgs.get(argChar).set(parameter);
+            marshalers.get(argChar).set(parameter);
         }catch(ArrayIndexOutOfBoundsException e){
             valid = false;
             errorCode = ErrorCode.MISSING_INTEGER;
@@ -212,17 +213,17 @@ public class Args {
     }
     
     public boolean getBoolean(char arg){
-        Args.ArgumentMarshaler am = booleanArgs.get(arg);
+        Args.ArgumentMarshaler am = marshalers.get(arg);
         return am != null && (Boolean)am.get();
     }
     
     public String getString(char arg){
-        Args.ArgumentMarshaler am = stringArgs.get(arg);
+        Args.ArgumentMarshaler am = marshalers.get(arg);
         return am == null ? "" : (String)am.get();
     }
     
     public int getInteger(char arg){
-        Args.ArgumentMarshaler am = integerArgs.get(arg);
+        Args.ArgumentMarshaler am = marshalers.get(arg);
         return am == null ? 0 : (int)am.get();
     }
     
