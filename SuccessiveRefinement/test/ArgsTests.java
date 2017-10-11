@@ -64,6 +64,12 @@ public class ArgsTests {
         assertEquals(false, instance.parse());
     }
     
+    @Test
+    public void parseSchema_returns_true_if_integer() throws Exception {
+      Args instance = new Args("x#", new String[]{"-x", "42"});
+      assertEquals(true, instance.parse());
+    }
+    
     @Test 
     public void getBoolean_returns_boolean() throws Exception {
         Args instance = new Args("x", new String[]{"-x"});
@@ -77,11 +83,17 @@ public class ArgsTests {
     } 
     
     @Test 
-        public void getBoolean_returns_false_if_invalid_arg() throws Exception{
+    public void getBoolean_returns_false_if_invalid_arg() throws Exception{
         Args instance = new Args("x", new String[]{"-x"});
         assertEquals(false, instance.getBoolean('y'));
     }
-    
+        
+    @Test
+    public void getBoolean_returns_false_if_arg_not_boolean() throws Exception{
+        Args instance = new Args("x*", new String[]{"-x", "param"});
+        assertEquals(false, instance.getBoolean('x'));
+    }
+        
     @Test 
     public void getString_returns_string() throws Exception {
         Args instance = new Args("x*", new String[]{"-x", "param"});
