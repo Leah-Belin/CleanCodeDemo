@@ -14,18 +14,18 @@ public class ComparisonCompactor {
     private static final String DELTA_END = "]";
     private static final String DELTA_START = "[";
     
-    private int _contextLength;
-    private String _expected;
-    private String _actual;
+    private int contextLength;
+    private String expected;
+    private String actual;
     private String compactExpected;
     private String compactActual;
     private int prefixLength;
     private int suffixLength;
     
     public ComparisonCompactor(int contextLength, String expected, String actual){
-        this._contextLength = contextLength;
-        _expected = expected;
-        _actual = actual;
+        this.contextLength = contextLength;
+        this.expected = expected;
+        this.actual = actual;
     }
     
     public String compactedComparison(String message){
@@ -34,21 +34,21 @@ public class ComparisonCompactor {
             return Assert.format(message, compactExpected, compactActual);
         }
         else{
-            return Assert.format(message, _expected, _actual);
+            return Assert.format(message, expected, actual);
         }        
     }
     
     private void compactExpectedAndActual(){
         findCommonPrefixAndSuffix();
-        compactExpected = compactString(_expected);
-        compactActual = compactString(_actual);
+        compactExpected = compactString(expected);
+        compactActual = compactString(actual);
     }
     
     private void findCommonPrefixAndSuffix(){
         findCommonPrefix();
         suffixLength = 0;
         for(;!suffixOverlapsPrefix(suffixLength); suffixLength++){
-            if(charFromEnd(_expected, suffixLength) != charFromEnd(_actual, suffixLength))
+            if(charFromEnd(expected, suffixLength) != charFromEnd(actual, suffixLength))
                 break;
         }
     }
@@ -58,12 +58,12 @@ public class ComparisonCompactor {
     }
     
     private boolean suffixOverlapsPrefix(int suffixLength){
-        return _actual.length() - suffixLength <= prefixLength 
-                || _expected.length() - suffixLength <= prefixLength;
+        return actual.length() - suffixLength <= prefixLength 
+                || expected.length() - suffixLength <= prefixLength;
     }
     
     private boolean canBeCompacted(){
-        return _expected != null && _actual != null && !areStringsEqual();
+        return expected != null && actual != null && !areStringsEqual();
     }
     
     private String compactString(String source){
@@ -74,25 +74,25 @@ public class ComparisonCompactor {
     }
     
     private void findCommonPrefix(){
-        int end = Math.min(_expected.length(), _actual.length());
+        int end = Math.min(expected.length(), actual.length());
         for(;prefixLength < end; prefixLength++){
-            if (_expected.charAt(prefixLength) != _actual.charAt(prefixLength))
+            if (expected.charAt(prefixLength) != actual.charAt(prefixLength))
                 break;
         }        
     }
         
     private String computeCommonPrefix(){
-        return (prefixLength > _contextLength ? ELLIPSIS: "") + 
-                _expected.substring(Math.max(0, prefixLength - _contextLength), prefixLength);
+        return (prefixLength > contextLength ? ELLIPSIS: "") + 
+                expected.substring(Math.max(0, prefixLength - contextLength), prefixLength);
     }
     
     private String computeCommonSuffix(){
-        int end = Math.min(_expected.length() - suffixLength + _contextLength, _expected.length());
-        return _expected.substring(_expected.length() - suffixLength, end) + 
-                (_expected.length() - suffixLength < _expected.length() - _contextLength ? ELLIPSIS : "");
+        int end = Math.min(expected.length() - suffixLength + contextLength, expected.length());
+        return expected.substring(expected.length() - suffixLength, end) + 
+                (expected.length() - suffixLength < expected.length() - contextLength ? ELLIPSIS : "");
     }
     
     private boolean areStringsEqual(){
-        return _expected.equals(_actual);
+        return expected.equals(actual);
     }
 }
