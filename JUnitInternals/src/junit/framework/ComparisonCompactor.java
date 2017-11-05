@@ -27,18 +27,21 @@ public class ComparisonCompactor {
     }
     
     public String compact(String message){
-        if(shouldNotCompact())
+        if(canBeCompacted()){
+            findCommonPrefix();
+            findCommonSuffix();
+            String compactExpected = compactString(_expected);
+            String compactActual = compactString(_actual);
+            return Assert.format(message, compactExpected, compactActual);
+        }
+        else{
             return Assert.format(message, _expected, _actual);
+        }
         
-        findCommonPrefix();
-        findCommonSuffix();
-        String compactExpected = compactString(_expected);
-        String compactActual = compactString(_actual);
-        return Assert.format(message, compactExpected, compactActual);
     }
     
-    private boolean shouldNotCompact(){
-        return _expected == null || _actual == null || areStringsEqual();
+    private boolean canBeCompacted(){
+        return _expected != null && _actual != null && !areStringsEqual();
     }
     
     private String compactString(String source){
