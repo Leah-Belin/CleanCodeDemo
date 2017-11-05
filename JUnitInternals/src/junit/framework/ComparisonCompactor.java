@@ -29,19 +29,26 @@ public class ComparisonCompactor {
     }
     
     public String compactedComparison(String message){
-        if(canBeCompacted()){
-            compactExpectedAndActual();
-            return Assert.format(message, compactExpected, compactActual);
+        String compactExpected = expected;
+        String compactActual = actual;
+        if(shouldBeCompacted()){
+            findCommonPrefixAndSuffix();
+            compactExpected = compact(expected);
+            compactActual = compact(actual);
         }
-        else{
-            return Assert.format(message, expected, actual);
-        }        
+            return Assert.format(message, compactExpected, compactActual);               
     }
     
-    private void compactExpectedAndActual(){
-        findCommonPrefixAndSuffix();
-        compactExpected = compactString(expected);
-        compactActual = compactString(actual);
+    //huh??? why are we doing this, is this just for readability above?  Seems 
+    //like a very strange thing to do.
+    private boolean shouldBeCompacted(){
+        return !shouldNotBeCompacted(); 
+    }
+    
+    private boolean shouldNotBeCompacted(){
+        return expected == null ||
+            actual == null || 
+            expected.equals(actual);
     }
     
     private void findCommonPrefixAndSuffix(){
@@ -61,18 +68,7 @@ public class ComparisonCompactor {
         return actual.length() - suffixLength <= prefixLength 
                 || expected.length() - suffixLength <= prefixLength;
     }
-    
-    private boolean canBeCompacted(){
-        return expected != null && actual != null && !areStringsEqual();
-    }
-    
-    private String compactString(String source){
-        return
-            computeCommonPrefix() + DELTA_START + 
-                source.substring(prefixLength, source.length() - suffixLength) +
-                DELTA_END + computeCommonSuffix();
-    }
-    
+       
     private void findCommonPrefix(){
         int end = Math.min(expected.length(), actual.length());
         for(;prefixLength < end; prefixLength++){
@@ -80,19 +76,42 @@ public class ComparisonCompactor {
                 break;
         }        
     }
-        
-    private String computeCommonPrefix(){
-        return (prefixLength > contextLength ? ELLIPSIS: "") + 
-                expected.substring(Math.max(0, prefixLength - contextLength), prefixLength);
+    
+    private String compact(String s){
+        return new StringBuilder()
+                .append(startingEllipsis())
+                .append(startingContext())
+                .append(DELTA_START)
+                .append(delta(s))
+                .append(DELTA_END)
+                .append(endingContext())
+                .append(endingEllipsis())
+                .toString();
     }
     
-    private String computeCommonSuffix(){
-        int end = Math.min(expected.length() - suffixLength + contextLength, expected.length());
-        return expected.substring(expected.length() - suffixLength, end) + 
-                (expected.length() - suffixLength < expected.length() - contextLength ? ELLIPSIS : "");
+    private String startingEllipsis(){
+        return prefixLength> contextLength ? ELLIPSIS : "";
     }
     
-    private boolean areStringsEqual(){
-        return expected.equals(actual);
+    private String startingContext(){
+        int contextStart = Math.max(0, prefixLength - contextLength);
+        int contextEnd = prefixLength;
+        return expected.substring(contextStart, contextEnd);
+    }
+    
+    private String delta(String s){
+        int deltaStart = prefixLength;
+        int deltaEnd = s.length() - suffixLength;
+        return s.substring(deltaStart, deltaEnd);
+    }     
+    
+    private String endingContext(){
+        int contextStart = expected.length() - suffixLength;
+        int contextEnd = Math.min(contextStart + contextLength, expected.length());
+        return expected.substring(contextStart, contextEnd);
+    }
+    
+    private String endingEllipsis(){
+        return (suffixLength > contextLength ? ELLIPSIS : "");
     }
 }
