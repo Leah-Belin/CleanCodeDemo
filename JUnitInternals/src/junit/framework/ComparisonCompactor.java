@@ -1,54 +1,84 @@
 /*
- * This is the "defactored" version of the JUnit Internals ComparisonCompactor from 
- * figure 15-3.
+ * This is the original version of the JUnit Internals ComparisonCompactor from 
+ * figure 15-2.
+ *
+ *  The junit team's code for this class is at https://github.com/junit-team/junit4/blob/master/src/main/java/junit/framework/ComparisonCompactor.java
+ *
  */
 package junit.framework;
 
 import java.lang.AssertionError;
 
-/**
- *
- * @author Leah Belin
- */
 public class ComparisonCompactor {
-    private int ctxt;
-    private String s1;
-    private String s2;
-    private int pfx;
-    private int sfx;
+    private static final String ELLIPSIS = "...";
+    private static final String DELTA_END = "]";
+    private static final String DELTA_START = "[";
     
-    public ComparisonCompactor(int ctxt, String s1, String s2){
-        if(s1 == null || s2 == null || s1.equals(s2))
-            return Assert.format(msg, s1, s2);
-        
-        pfx = 0;
-        for(; pfx < Math.min(s1.length(), s2.length()); pfx+++){
-            if(s1.charAt(pfx) != s2.charAt(pfx))
-                break;
-        }
-        
-        int sfx1 = s1.length() - 1;
-        int sfx2 = s2.length() - 2;
-        for (; sfx2 >= pfx && sfx1 >= pfx; sfx2--, sfx1--){
-            if (s1.charAt(sfx1) != s2.charAt(sfx2))
-                break;
-        }
-        
-        sfx = s1.length() - sfx1;
-        String cmp1 = compactString(s1);
-        String cmp2 = compactString(s2);
-        return Assert.format(msg, cmp1, cmp2);
+    private int fContextLength;
+    private String fExpected;
+    private String fActual;
+    private int fPrefix;
+    private int fSuffix;
+    
+    public ComparisonCompactor(int contextLength, String expected, String actual){
+        fContextLength = contextLength;
+        fExpected = expected;
+        fActual = actual;
     }
     
-    private String compactString(String s){
-        String result = "[" + s.substring(pfx, s.length() - sfx + 1) + "]";
-        if(pfx > 0)
-            result = (pfx > ctxt ? "..." : "") + s1.substring(Math.max(0,  pfx-ctxt), pfx) + result;
-        if(sfx > 0) {
-            int end = Math.min(s1.length() - sfx + 1 + ctxt, s1.length());
-            result = result + (s1.substring(s1.length() - sfx + 1, end) + (s1.length() - sfx +
-                    1 < s1.length() - ctxt ? "..." : ""));
-        }
+    public String compact(String message){
+        if(fExpected == null || fActual == null || areStringsEqual())
+            return Assert.format(message, fExpected, fActual);
+        
+        findCommonPrefix();
+        findCommonSuffix();
+        String expected = compactString(fExpected);
+        String actual = compactString(fActual);
+        return Assert.format(message, expected, actual);
+    }
+    
+    private String compactString(String source){
+        String result = DELTA_START + 
+                source.substring(fPrefix, source.length() - fSuffix + 1) + DELTA_END;
+        if(fPrefix > 0)
+            result = computeCommonPrefix() + result;
+        if(fSuffix > 0)
+                result = result + computeCommonSuffix();
         return result;
+    }
+    
+    private void findCommonPrefix(){
+        fPrefix = 0;
+        int end = Math.min(fExpected.length(), fActual.length());
+        for(;fPrefix < end; fPrefix++){
+            if (fExpected.charAt(fPrefix) != fActual.charAt(fPrefix))
+                break;
+        }
+    }
+    
+    private void findCommonSuffix(){
+        int expectedSuffix = fExpected.length() - 1;
+        int actualSuffix = fActual.length() - 1;
+        for(; actualSuffix >= fPrefix && expectedSuffix >= fPrefix;
+                actualSuffix--, expectedSuffix--){
+            if(fExpected.charAt(expectedSuffix) != fActual.charAt(actualSuffix))
+                break;
+        }
+        fSuffix = fExpected.length() - expectedSuffix;
+    }
+    
+    private String computeCommonPrefix(){
+        return (fPrefix > fContextLength ? ELLIPSIS: "") + fExpected.substring(
+                Math.max(0, fPrefix - fContextLength), fPrefix);
+    }
+    
+    private String computeCommonSuffix(){
+        int end = Math.min(fExpected.length() - fSuffix + 1 + fContextLength, fExpected.length());
+        return fExpected.substring(fExpected.length() - fSuffix + 1, end) + 
+                (fExpected.length() - fSuffix + 1 < fExpected.length() - fContextLength ? ELLIPSIS : "");
+    }
+    
+    private boolean areStringsEqual(){
+        return fExpected.equals(fActual);
     }
 }
