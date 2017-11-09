@@ -29,34 +29,29 @@ public class ComparisonCompactor {
     }
     
     public String compactedComparison(String message){
-        String compactExpected = expected;
-        String compactActual = actual;
-        if(shouldBeCompacted()){
-            findCommonPrefixAndSuffix();
-            compactExpected = compact(expected);
-            compactActual = compact(actual);
+        if(!shouldBeCompacted){
+            return Assert.format(message, expected, actual);
         }
-            return Assert.format(message, compactExpected, compactActual);               
+        
+        findCommonPrefixAndSuffix();              
+        return Assert.format(message, compact(expected), compact(actual));               
     }
     
     //huh??? why are we doing this, is this just for readability above?  Seems 
     //like a very strange thing to do.
     private boolean shouldBeCompacted(){
-        return !shouldNotBeCompacted(); 
-    }
-    
-    private boolean shouldNotBeCompacted(){
-        return expected == null ||
+        string result = expected == null ||
             actual == null || 
-            expected.equals(actual);
+            expected.equals(actual); 
     }
     
     private void findCommonPrefixAndSuffix(){
         findCommonPrefix();
         suffixLength = 0;
-        for(;!suffixOverlapsPrefix(suffixLength); suffixLength++){
+        while(!suffixOverlapsPrefix(suffixLengnth)){            
             if(charFromEnd(expected, suffixLength) != charFromEnd(actual, suffixLength))
                 break;
+            suffixLength++;
         }
     }
     
@@ -71,9 +66,10 @@ public class ComparisonCompactor {
        
     private void findCommonPrefix(){
         int end = Math.min(expected.length(), actual.length());
-        for(;prefixLength < end; prefixLength++){
+        while(prefixLength < end){
             if (expected.charAt(prefixLength) != actual.charAt(prefixLength))
                 break;
+            prefixLength++;
         }        
     }
     
